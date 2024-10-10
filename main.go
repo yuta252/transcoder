@@ -10,10 +10,14 @@ import (
 	"google.golang.org/protobuf/types/known/durationpb"
 )
 
+type reqType string
+
+const (
+	reqTypeGet    reqType = "GET"
+	reqTypeCreate reqType = "CREATE"
+)
+
 func getJob(projectID string, location string, jobID string) (*transcoderpb.Job, error) {
-	// projectID := "my-project-id"
-	// location := "us-central1"
-	// jobID := "my-job-id"
 	ctx := context.Background()
 	client, err := transcoder.NewClient(ctx)
 	if err != nil {
@@ -81,8 +85,9 @@ func createJobWithSetNumberImagesSpritesheet(projectID string, location string, 
 							SpriteHeightPixels: 72,
 							ColumnCount:        1,
 							RowCount:           1,
-							StartTimeOffset:    durationpb.New(0),
-							Quality:            100,
+							// ExtractionStrategy: &transcoderpb.SpriteSheet_Interval{Interval: durationpb.New(1)},
+							StartTimeOffset: durationpb.New(0),
+							Quality:         100,
 						},
 					},
 				},
@@ -100,20 +105,26 @@ func createJobWithSetNumberImagesSpritesheet(projectID string, location string, 
 }
 
 func main() {
-	projectID := "projectID"
+	// Set your projectID
+	projectID := "ProjectID"
 	location := "asia-northeast1"
-	inputURI := "gs://test/input/sample.mp4"
-	outputURI := "gs://test/output/"
-	response, err := createJobWithSetNumberImagesSpritesheet(projectID, location, inputURI, outputURI)
-	if err != nil {
-		fmt.Println("failed to create job:", err)
-		os.Exit(1)
+	inputURI := "gs://test-nakano-thumbnail-extraction/input/sample.mp4"
+	outputURI := "gs://test-nakano-thumbnail-extraction/output/"
+	reqType := reqTypeCreate
+
+	if reqType == reqTypeCreate {
+		response, err := createJobWithSetNumberImagesSpritesheet(projectID, location, inputURI, outputURI)
+		if err != nil {
+			fmt.Println("failed to create job:", err)
+			os.Exit(1)
+		}
+		fmt.Printf("get job: %+v", response)
+	} else if reqType == reqTypeGet {
+		response, err := getJob(projectID, location, "a942a66f-8b9a-4e00-8d05-ad6479f3e63b")
+		if err != nil {
+			fmt.Println("failed to get job:", err)
+			os.Exit(1)
+		}
+		fmt.Printf("get job: %+v", response)
 	}
-	fmt.Printf("get job: %+v", response)
-	// response, err := getJob(projectID, location, "aeadda13-cada-4ae5-a6bc-190cf21d555e")
-	// if err != nil {
-	// 	fmt.Println("failed to get job:", err)
-	// 	os.Exit(1)
-	// }
-	// fmt.Printf("get job: %+v", response)
 }
